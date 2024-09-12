@@ -2,27 +2,31 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 const App = () => {
-  const [bigurl, setbigurl] = useState("");
-  const [urls, setUrls] = useState([]);
+  const [bigurl, setBigUrl] = useState("");
+  const [urls, setUrls] = useState([
+    { bigurl: "https://www.example.com/1", smallurl: "short.ly/abc123", click: 5 },
+    { bigurl: "https://www.example.com/2", smallurl: "short.ly/def456", click: 2 },
+    { bigurl: "https://www.example.com/3", smallurl: "short.ly/ghi789", click: 10 },
+  ]);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const formhandle = async (e) => {
     e.preventDefault();
     if (!bigurl) {
-      setErrorMessage('Please fill in all fields');
+      setErrorMessage('Please enter a URL.');
       setSuccessMessage("");
       return;
     }
 
     try {
-      const response = await axios.post('http://localhost:8000', { bigurl });
+      const response = await axios.post('http://localhost:8000/', { bigurl });
       const { smallurl } = response.data;
 
       setUrls([...urls, { bigurl, smallurl, click: 0 }]);
-      setSuccessMessage("Your data has been successfully submitted!");
+      setSuccessMessage("Short URL created successfully!");
       setErrorMessage("");
-      setbigurl("");
+      setBigUrl("");
     } catch (error) {
       console.error("Error creating short URL:", error);
       setErrorMessage("Failed to create short URL");
@@ -32,78 +36,80 @@ const App = () => {
 
   const handleClick = async (smallurl) => {
     try {
-      // Open the short URL in a new tab
-      window.open(`http://localhost:8000/url/${smallurl}`, '_blank');
-
-      // Fetch the updated click count from the server
-      const response = await axios.get(`http://localhost:8000/getclick/${smallurl}`);
+      const response = await axios.get(`http://localhost:8000/urlclick/${smallurl}`);
       const { clickcount } = response.data;
 
-      // Update the clicks count in the state
       setUrls((prevUrls) =>
         prevUrls.map((url) =>
           url.smallurl === smallurl ? { ...url, click: clickcount } : url
         )
       );
+      window.open(`http://localhost:8000/url/${smallurl}`, '_blank');
     } catch (error) {
-      console.error("Error connecting to URL:", error);
+      console.error("Error fetching updated click count:", error);
     }
   };
 
   return (
-    <div className='m-10'>
-      <h1>URL Shortener</h1>
-      <form action="">
-        <div className='px-36 py-5 w-60'>
-          <label>Big URL</label>
-          <input 
-            type='text' 
-            className='border border-black px-60 py-6' 
-            value={bigurl} 
-            onChange={(e) => setbigurl(e.target.value)} 
+    <div className="container mx-auto p-4 sm:p-6 md:p-10">
+      <h1 className="text-3xl sm:text-4xl font-bold text-center text-blue-600 mb-6 md:mb-10">URL Shortener</h1>
+      
+      <form className="mb-6 md:mb-10" onSubmit={formhandle}>
+        <div className="mb-4">
+          <label className="block text-md md:text-lg font-medium text-gray-700">Enter Big URL</label>
+          <input
+            type="text"
+            value={bigurl}
+            onChange={(e) => setBigUrl(e.target.value)}
+            className="w-full p-2 md:p-3 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
-        <div className='px-36 py-5 w-60'>
-          <label>Submit</label>
-          <button 
-            type='submit' 
-            className='border border-black px-20 py-1 text-blue-800' 
-            onClick={formhandle}
+        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        {successMessage && <p className="text-green-500">{successMessage}</p>}
+        <div className='flex justify-end'>
+          <button
+            type="submit"
+            className="w-36  py-2 md:py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition duration-200 justify-center"
           >
             Submit
           </button>
         </div>
       </form>
 
-      <table className='min-w-full border-collapse border border-blue-600'>
-        <thead>
-          <tr>
-            <th className='border border-blue-600 px-4 py-2'>S.no</th>
-            <th className='border border-blue-600 px-4 py-2'>Big URL</th>
-            <th className='border border-blue-600 px-4 py-2'>Short URL</th>
-            <th className='border border-blue-600 px-4 py-2'>Clicks</th>
-            <th className='border border-blue-600 px-4 py-2'>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {urls.map((url, index) => (
-            <tr key={index}>
-              <td className='border border-blue-600 px-4 py-2'>{index + 1}</td>
-              <td className='border border-blue-600 px-4 py-2'>{url.bigurl}</td>
-              <td className='border border-blue-600 px-4 py-2'>{url.smallurl}</td>
-              <td className='border border-blue-600 px-4 py-2'>{url.click}</td>
-              <td className='border border-blue-600 px-4 py-2'>
-                <button 
-                  className='border border-blue-600 px-4 m-5'
-                  onClick={() => handleClick(url.smallurl)}
-                >
-                  View
-                </button>
-              </td>
+      {/* Responsive Table Wrapper */}
+      <div className="overflow-x-auto">
+        <table className="w-full table-auto border-collapse">
+          <thead>
+            <tr className="bg-gray-100 text-left">
+              <th className="px-2 md:px-4 py-2 border border-gray-300">S.No</th>
+              <th className="px-2 md:px-4 py-2 border border-gray-300">Big URL</th>
+              <th className="px-2 md:px-4 py-2 border border-gray-300">Short URL</th>
+              <th className="px-2 md:px-4 py-2 border border-gray-300">Clicks</th>
+              <th className="px-2 md:px-4 py-2 border border-gray-300">Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {urls.map((url, index) => (
+              <tr key={index} className="hover:bg-gray-50">
+                <td className="px-2 md:px-4 py-2 border border-gray-300">{index + 1}</td>
+                <td className="px-2 md:px-4 py-2 border border-gray-300">{url.bigurl}</td>
+                <td className="px-2 md:px-4 py-2 border border-gray-300 text-blue-600 underline">
+                  {url.smallurl}
+                </td>
+                <td className="px-2 md:px-4 py-2 border border-gray-300">{url.click}</td>
+                <td className="px-2 md:px-4 py-2 border border-gray-300">
+                  <button
+                    className="px-2 md:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-400"
+                    onClick={() => handleClick(url.smallurl)}
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
