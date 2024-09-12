@@ -20,7 +20,7 @@ const App = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/', { bigurl });
+      const response = await axios.post('https://url-backend-rmsl.onrender.com/', { bigurl });
       const { smallurl } = response.data;
 
       setUrls([...urls, { bigurl, smallurl, click: 0 }]);
@@ -36,7 +36,7 @@ const App = () => {
 
   const handleClick = async (smallurl) => {
     try {
-      const response = await axios.get(`http://localhost:8000/urlclick/${smallurl}`);
+      const response = await axios.get(`https://url-backend-rmsl.onrender.com/urlclick/${smallurl}`);
       const { clickcount } = response.data;
 
       setUrls((prevUrls) =>
@@ -44,7 +44,7 @@ const App = () => {
           url.smallurl === smallurl ? { ...url, click: clickcount } : url
         )
       );
-      window.open(`http://localhost:8000/url/${smallurl}`, '_blank');
+      window.open(`https://url-backend-rmsl.onrender.com/url/${smallurl}`, '_blank');
     } catch (error) {
       console.error("Error fetching updated click count:", error);
     }
